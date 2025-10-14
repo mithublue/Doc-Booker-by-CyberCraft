@@ -233,6 +233,29 @@
 	text-align: center;
 }
 
+.doc-booker-directory__designation {
+	margin: 4px 0 0;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--doc-booker-muted);
+	text-align: center;
+}
+
+.doc-booker-directory__details {
+	margin-top: 10px;
+	display: inline-block;
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--doc-booker-primary);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+
+.doc-booker-directory__details:hover {
+	color: var(--doc-booker-primary-dark);
+	text-decoration: underline;
+}
+
 .doc-booker-directory__meta {
 	list-style: none;
 	margin: 0;

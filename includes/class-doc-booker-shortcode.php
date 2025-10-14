@@ -127,6 +127,7 @@ class Doc_Booker_Shortcode {
 			$department     = $departments[ $department_key ] ?? null;
 			$department_name = $department['name'] ?? __( 'Unassigned Department', 'doc-booker' );
 			$department_desc = $department['description'] ?? '';
+			$designation     = get_user_meta( $doctor->ID, 'db_doctor_designation', true );
 
 			if ( $filters['department'] && $department_key !== $filters['department'] ) {
 				continue;
@@ -158,10 +159,10 @@ class Doc_Booker_Shortcode {
 			$groups[ $group_key ]['doctors'][] = [
 				'id'       => $doctor->ID,
 				'name'     => $doctor->display_name,
-				'email'    => $doctor->user_email,
 				'url'      => get_author_posts_url( $doctor->ID ),
 				'avatar'   => get_avatar( $doctor->ID, 128, '', $doctor->display_name, [ 'class' => 'doc-booker-directory__avatar-img' ] ),
 				'letter'   => $department_letter,
+				'designation' => $designation,
 				'raw_name' => $doctor->display_name,
 			];
 
@@ -220,14 +221,12 @@ class Doc_Booker_Shortcode {
 							</div>
 							<div class="doc-booker-directory__card-body">
 								<h3 class="doc-booker-directory__card-title"><?php echo esc_html( $doctor['name'] ); ?></h3>
-								<ul class="doc-booker-directory__meta">
-									<?php if ( ! empty( $doctor['email'] ) ) : ?>
-										<li><a href="mailto:<?php echo esc_attr( $doctor['email'] ); ?>"><?php echo esc_html( $doctor['email'] ); ?></a></li>
-									<?php endif; ?>
-									<?php if ( ! empty( $doctor['url'] ) ) : ?>
-										<li><a href="<?php echo esc_url( $doctor['url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'View profile', 'doc-booker' ); ?></a></li>
-									<?php endif; ?>
-								</ul>
+								<?php if ( ! empty( $doctor['designation'] ) ) : ?>
+									<p class="doc-booker-directory__designation"><?php echo esc_html( $doctor['designation'] ); ?></p>
+								<?php endif; ?>
+								<?php if ( ! empty( $doctor['url'] ) ) : ?>
+									<a class="doc-booker-directory__details" href="<?php echo esc_url( $doctor['url'] ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'See Details', 'doc-booker' ); ?></a>
+								<?php endif; ?>
 							</div>
 						</article>
 					<?php endforeach; ?>
