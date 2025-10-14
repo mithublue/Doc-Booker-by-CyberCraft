@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       Doc Booker
+ * Plugin Name:       Doc Booker by CyberCraft
  * Description:       Appointment management essentials for doctors and patients.
  * Version:           1.0.0
- * Author:            Doc Booker Team
+ * Author:            CyberCraft
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Text Domain:       doc-booker
