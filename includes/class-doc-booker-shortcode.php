@@ -50,7 +50,11 @@ class Doc_Booker_Shortcode {
 		$data         = $this->get_directory_data( $filters );
 		$results_html = $this->render_directory_groups( $data['groups'] );
 
-		$letters = range( 'A', 'Z' );
+		$total        = $data['total'];
+		$error_message = __( 'Something went wrong. Please try again.', 'doc-booker' );
+		$letters        = range( 'A', 'Z' );
+		$active_letter  = $filters['letter'];
+
 		wp_localize_script(
 			'doc-booker-directory',
 			'DocBookerDirectory',
@@ -60,6 +64,9 @@ class Doc_Booker_Shortcode {
 				'action'         => Doc_Booker_Ajax::ACTION,
 				'defaultFilters' => $filters,
 				'letters'        => $letters,
+				'activeLetter'   => $active_letter,
+				'total'          => $total,
+				'errorMessage'   => $error_message,
 				'i18n'           => [
 					'allDepartments' => __( 'All Departments', 'doc-booker' ),
 					'apply'          => __( 'Apply Filter', 'doc-booker' ),

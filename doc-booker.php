@@ -17,6 +17,7 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 	class Doc_Booker {
 		const VERSION = '1.0.0';
 		const OPTION_DEPARTMENTS = 'db_departments';
+		const OPTION_DESIGNATIONS = 'db_designations';
 		const OPTION_TIME_SLOTS = 'db_time_slots';
 		const ROLE_DOCTOR = 'db_doctor';
 		const ROLE_PATIENT = 'db_patient';
@@ -34,6 +35,7 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 		public function __construct() {
 			add_action( 'admin_menu', [ $this, 'register_admin_menu' ] );
 			add_action( 'admin_init', [ $this, 'handle_departments_form' ] );
+			add_action( 'admin_init', [ $this, 'handle_designations_form' ] );
 			add_action( 'admin_init', [ $this, 'handle_timeslots_form' ] );
 			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 
@@ -56,6 +58,11 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 			$current_departments = get_option( self::OPTION_DEPARTMENTS, null );
 			if ( null === $current_departments || ! is_array( $current_departments ) ) {
 				add_option( self::OPTION_DEPARTMENTS, [] );
+			}
+
+			$current_designations = get_option( self::OPTION_DESIGNATIONS, null );
+			if ( null === $current_designations || ! is_array( $current_designations ) ) {
+				add_option( self::OPTION_DESIGNATIONS, [] );
 			}
 
 			$current_timeslots = get_option( self::OPTION_TIME_SLOTS, null );
@@ -111,6 +118,15 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 				'manage_options',
 				'doc-booker-departments',
 				[ $this, 'render_departments_page' ]
+			);
+
+			add_submenu_page(
+				'doc-booker',
+				__( 'Designations', 'doc-booker' ),
+				__( 'Designations', 'doc-booker' ),
+				'manage_options',
+				'doc-booker-designations',
+				[ $this, 'render_designations_page' ]
 			);
 
 			add_submenu_page(
@@ -190,6 +206,29 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 			update_option( self::OPTION_DEPARTMENTS, $departments );
 
 			add_settings_error( 'doc_booker_departments', 'departments_saved', __( 'Departments saved successfully.', 'doc-booker' ), 'updated' );
+		}
+
+		public function handle_designations_form() {
+			if ( ! isset( $_POST['doc_booker_designations_nonce'] ) ) {
+				return;
+			}
+
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+
+			check_admin_referer( 'doc_booker_save_designations', 'doc_booker_designations_nonce' );
+
+			$names = isset( $_POST['db_designation_name'] ) ? (array) wp_unslash( $_POST['db_designation_name'] ) : [];
+			$names = array_map( 'sanitize_text_field', $names );
+			$names = array_filter( $names, static function ( $name ) {
+				return '' !== $name;
+			} );
+			$names = array_values( array_unique( $names ) );
+
+			update_option( self::OPTION_DESIGNATIONS, $names );
+
+			add_settings_error( 'doc_booker_designations', 'designations_saved', __( 'Designations saved successfully.', 'doc-booker' ), 'updated' );
 		}
 
 		public function handle_timeslots_form() {
@@ -376,13 +415,81 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 			);
 		}
 
-		public function render_patients_page() {
-			$this->render_placeholder_page(
-				doc_booker_get_hero_content(
-					__( 'Patients', 'doc-booker' ),
-					__( 'Centralized access to all registered patients. (Feature coming soon)', 'doc-booker' )
-				)
-			);
+		public function render_designations_page() {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return;
+			}
+
+			$designations = get_option( self::OPTION_DESIGNATIONS, [] );
+			$designations = is_array( $designations ) ? $designations : [];
+
+			if ( empty( $designations ) ) {
+				$designations[] = '';
+			}
+
+			settings_errors( 'doc_booker_designations' );
+			?>
+			<div class="wrap doc-booker-wrap">
+				<h1 class="wp-heading-inline"><?php esc_html_e( 'Designations', 'doc-booker' ); ?></h1>
+				<p class="doc-booker-page-subtitle"><?php esc_html_e( 'Curate designation titles that can be reused across your medical staff profiles.', 'doc-booker' ); ?></p>
+
+				<form method="post" class="doc-booker-card">
+					<?php wp_nonce_field( 'doc_booker_save_designations', 'doc_booker_designations_nonce' ); ?>
+
+					<div class="doc-booker-card__header">
+						<div>
+							<h2><?php esc_html_e( 'Designation Directory', 'doc-booker' ); ?></h2>
+							<p><?php esc_html_e( 'Add or update job titles such as Consultant, Senior Physician, or Specialist.', 'doc-booker' ); ?></p>
+						</div>
+					</div>
+
+					<div class="doc-booker-card__body">
+						<table class="doc-booker-table" id="doc-booker-designations-table">
+							<thead>
+								<tr>
+									<th scope="col"><?php esc_html_e( 'Designation Name', 'doc-booker' ); ?></th>
+									<th scope="col" class="doc-booker-table__actions"><?php esc_html_e( 'Actions', 'doc-booker' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $designations as $designation ) : ?>
+									<tr class="doc-booker-designation-row">
+										<td>
+											<input type="text" class="regular-text" name="db_designation_name[]" value="<?php echo esc_attr( $designation ); ?>" placeholder="<?php esc_attr_e( 'Consultant', 'doc-booker' ); ?>" required />
+										</td>
+										<td class="doc-booker-table__actions">
+											<button type="button" class="button button-link-delete doc-booker-remove-designation" aria-label="<?php esc_attr_e( 'Remove designation', 'doc-booker' ); ?>">&times;</button>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+
+						<button type="button" id="doc-booker-add-designation" class="button button-secondary doc-booker-add-row">
+							<span class="dashicons dashicons-plus"></span>
+							<?php esc_html_e( 'Add Designation', 'doc-booker' ); ?>
+						</button>
+					</div>
+
+					<div class="doc-booker-card__footer">
+						<button type="submit" class="button button-primary button-hero">
+							<?php esc_html_e( 'Save Designations', 'doc-booker' ); ?>
+						</button>
+					</div>
+				</form>
+
+				<template id="doc-booker-designation-template">
+					<tr class="doc-booker-designation-row">
+						<td>
+							<input type="text" class="regular-text" name="db_designation_name[]" placeholder="<?php esc_attr_e( 'Senior Specialist', 'doc-booker' ); ?>" required />
+						</td>
+						<td class="doc-booker-table__actions">
+							<button type="button" class="button button-link-delete doc-booker-remove-designation" aria-label="<?php esc_attr_e( 'Remove designation', 'doc-booker' ); ?>">&times;</button>
+						</td>
+					</tr>
+				</template>
+			</div>
+			<?php
 		}
 
 		public function render_departments_page() {
@@ -477,6 +584,15 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 			<?php
 		}
 
+		public function render_patients_page() {
+			$this->render_placeholder_page(
+				doc_booker_get_hero_content(
+					__( 'Patients', 'doc-booker' ),
+					__( 'Centralized access to all registered patients. (Feature coming soon)', 'doc-booker' )
+				)
+			);
+		}
+
 		public function render_doctor_profile_fields( $user ) {
 			if ( ! ( $user instanceof WP_User ) ) {
 				return;
@@ -486,8 +602,10 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 				return;
 			}
 
-			$departments = get_option( self::OPTION_DEPARTMENTS, [] );
-			$current    = get_user_meta( $user->ID, 'db_doctor_department', true );
+			$departments  = get_option( self::OPTION_DEPARTMENTS, [] );
+			$designations = self::get_designations();
+			$current_department  = get_user_meta( $user->ID, 'db_doctor_department', true );
+			$current_designation = get_user_meta( $user->ID, 'db_doctor_designation', true );
 			?>
 			<h2 class="doc-booker-profile-title"><?php esc_html_e( 'Doctor Details', 'doc-booker' ); ?></h2>
 			<table class="form-table doc-booker-profile-table">
@@ -500,12 +618,30 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 							<select name="db_doctor_department" id="db_doctor_department" class="regular-text">
 								<option value=""><?php esc_html_e( 'Select a department', 'doc-booker' ); ?></option>
 								<?php foreach ( $departments as $key => $department ) : ?>
-									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $current, $key ); ?>>
+									<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $current_department, $key ); ?>>
 										<?php echo esc_html( $department['name'] ); ?>
 									</option>
 								<?php endforeach; ?>
 							</select>
 							<p class="description"><?php esc_html_e( 'Assign this doctor to their primary department.', 'doc-booker' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th><label for="db_doctor_designation"><?php esc_html_e( 'Designation', 'doc-booker' ); ?></label></th>
+					<td>
+						<?php if ( empty( $designations ) ) : ?>
+							<p class="description"><?php esc_html_e( 'No designations available yet. Create one under Doc Booker → Designations.', 'doc-booker' ); ?></p>
+						<?php else : ?>
+							<select name="db_doctor_designation" id="db_doctor_designation" class="regular-text">
+								<option value=""><?php esc_html_e( 'Select a designation', 'doc-booker' ); ?></option>
+								<?php foreach ( $designations as $designation ) : ?>
+									<option value="<?php echo esc_attr( $designation ); ?>" <?php selected( $current_designation, $designation ); ?>>
+										<?php echo esc_html( $designation ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description"><?php esc_html_e( 'Choose the doctor’s current designation.', 'doc-booker' ); ?></p>
 						<?php endif; ?>
 					</td>
 				</tr>
@@ -522,16 +658,25 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 
 			if ( ! $user || ! in_array( self::ROLE_DOCTOR, (array) $user->roles, true ) ) {
 				delete_user_meta( $user_id, 'db_doctor_department' );
+				delete_user_meta( $user_id, 'db_doctor_designation' );
 				return;
 			}
 
-			$departments = get_option( self::OPTION_DEPARTMENTS, [] );
-			$selected    = isset( $_POST['db_doctor_department'] ) ? sanitize_text_field( wp_unslash( $_POST['db_doctor_department'] ) ) : '';
+			$departments   = get_option( self::OPTION_DEPARTMENTS, [] );
+			$designations  = self::get_designations();
+			$selected_department  = isset( $_POST['db_doctor_department'] ) ? sanitize_text_field( wp_unslash( $_POST['db_doctor_department'] ) ) : '';
+			$selected_designation = isset( $_POST['db_doctor_designation'] ) ? sanitize_text_field( wp_unslash( $_POST['db_doctor_designation'] ) ) : '';
 
-			if ( $selected && isset( $departments[ $selected ] ) ) {
-				update_user_meta( $user_id, 'db_doctor_department', $selected );
+			if ( $selected_department && isset( $departments[ $selected_department ] ) ) {
+				update_user_meta( $user_id, 'db_doctor_department', $selected_department );
 			} else {
 				delete_user_meta( $user_id, 'db_doctor_department' );
+			}
+
+			if ( $selected_designation && in_array( $selected_designation, $designations, true ) ) {
+				update_user_meta( $user_id, 'db_doctor_designation', $selected_designation );
+			} else {
+				delete_user_meta( $user_id, 'db_doctor_designation' );
 			}
 		}
 
@@ -567,6 +712,12 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 			}
 
 			return $departments;
+		}
+
+		public static function get_designations() {
+			$designations = get_option( self::OPTION_DESIGNATIONS, [] );
+
+			return is_array( $designations ) ? $designations : [];
 		}
 
 		public static function plugin_url() {

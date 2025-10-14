@@ -7,6 +7,8 @@
  * @var array  $letters
  * @var string $results_html
  * @var int    $total
+ * @var string $error_message
+ * @var string $active_letter
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -14,36 +16,36 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 ?>
 
-<div class="doc-booker-directory" data-error-message="<?php echo esc_attr( $filters['error_message'] ?? __( 'Something went wrong. Please try again.', 'doc-booker' ) ); ?>">
+<div class="doc-booker-directory" data-error-message="<?php echo esc_attr( $error_message ); ?>" data-active-letter="<?php echo esc_attr( strtolower( $active_letter ) ); ?>">
 	<form class="doc-booker-directory__form" novalidate>
 		<div class="doc-booker-directory__filters">
 			<div class="doc-booker-directory__field">
 				<label for="doc-booker-filter-department"><?php esc_html_e( 'Search by Department', 'doc-booker' ); ?></label>
 				<select id="doc-booker-filter-department" name="department">
-					<option value=""><?php esc_html_e( 'All Departments', 'doc-booker' ); ?></option>
+					<option value=""><?php esc_html_e( 'Please Select', 'doc-booker' ); ?></option>
 					<?php foreach ( $departments as $key => $department ) : ?>
-						<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $department['name'] ?? $key ); ?></option>
+						<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $filters['department'], $key ); ?>><?php echo esc_html( $department['name'] ?? $key ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</div>
 
 			<div class="doc-booker-directory__field">
 				<label for="doc-booker-filter-name"><?php esc_html_e( 'Search by Name', 'doc-booker' ); ?></label>
-				<input type="text" id="doc-booker-filter-name" name="name" placeholder="<?php esc_attr_e( 'Type doctor name', 'doc-booker' ); ?>" />
+				<input type="text" id="doc-booker-filter-name" name="name" value="<?php echo esc_attr( $filters['name'] ); ?>" placeholder="<?php esc_attr_e( 'Type doctor name', 'doc-booker' ); ?>" />
 			</div>
 
 			<div class="doc-booker-directory__field">
 				<label for="doc-booker-filter-date"><?php esc_html_e( 'Search by Date & Time', 'doc-booker' ); ?></label>
-				<input type="date" id="doc-booker-filter-date" name="date" />
+				<input type="date" id="doc-booker-filter-date" name="date" value="<?php echo esc_attr( $filters['date'] ); ?>" />
 			</div>
 
 			<div class="doc-booker-directory__field">
 				<label for="doc-booker-filter-availability"><?php esc_html_e( 'Search by Availability', 'doc-booker' ); ?></label>
 				<select id="doc-booker-filter-availability" name="availability">
 					<option value=""><?php esc_html_e( 'Please Select', 'doc-booker' ); ?></option>
-					<option value="both"><?php esc_html_e( 'Both', 'doc-booker' ); ?></option>
-					<option value="online"><?php esc_html_e( 'Online', 'doc-booker' ); ?></option>
-					<option value="in-hub"><?php esc_html_e( 'In Hub', 'doc-booker' ); ?></option>
+					<option value="both" <?php selected( $filters['availability'], 'both' ); ?>><?php esc_html_e( 'Both', 'doc-booker' ); ?></option>
+					<option value="online" <?php selected( $filters['availability'], 'online' ); ?>><?php esc_html_e( 'Online', 'doc-booker' ); ?></option>
+					<option value="in-hub" <?php selected( $filters['availability'], 'in-hub' ); ?>><?php esc_html_e( 'In Hub', 'doc-booker' ); ?></option>
 				</select>
 			</div>
 		</div>
@@ -55,11 +57,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</form>
 
-	<div class="doc-booker-directory__letter-filter" role="navigation" aria-label="<?php esc_attr_e( 'Filter by department initial', 'doc-booker' ); ?>">
-		<button type="button" class="doc-booker-directory__letter is-active" data-letter="all"><?php esc_html_e( 'All', 'doc-booker' ); ?></button>
-		<?php foreach ( $letters as $letter ) : ?>
-			<button type="button" class="doc-booker-directory__letter" data-letter="<?php echo esc_attr( strtolower( $letter ) ); ?>"><?php echo esc_html( strtoupper( $letter ) ); ?></button>
-		<?php endforeach; ?>
+	<div class="doc-booker-directory__letters">
+		<p class="doc-booker-directory__letters-heading"><?php esc_html_e( 'Search by Department', 'doc-booker' ); ?></p>
+		<div class="doc-booker-directory__letter-filter" role="navigation" aria-label="<?php esc_attr_e( 'Filter by department initial', 'doc-booker' ); ?>">
+			<button type="button" class="doc-booker-directory__letter<?php echo 'all' === strtolower( $active_letter ) ? ' is-active' : ''; ?>" data-letter="all"><?php esc_html_e( 'All', 'doc-booker' ); ?></button>
+			<?php foreach ( $letters as $letter ) :
+				$letter_lower = strtolower( $letter );
+				?>
+				<button type="button" class="doc-booker-directory__letter<?php echo $letter_lower === strtolower( $active_letter ) ? ' is-active' : ''; ?>" data-letter="<?php echo esc_attr( $letter_lower ); ?>"><?php echo esc_html( strtoupper( $letter ) ); ?></button>
+			<?php endforeach; ?>
+		</div>
 	</div>
 
 	<div class="doc-booker-directory__summary">

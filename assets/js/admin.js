@@ -16,6 +16,13 @@
 			row: '.doc-booker-time-slot-row',
 			remove: '.doc-booker-remove-slot',
 		},
+		designations: {
+			add: '#doc-booker-add-designation',
+			tableBody: '#doc-booker-designations-table tbody',
+			template: '#doc-booker-designation-template',
+			row: '.doc-booker-designation-row',
+			remove: '.doc-booker-remove-designation',
+		},
 		dayCard: '.doc-booker-day-card',
 	};
 
@@ -109,6 +116,36 @@
 		}, 220);
 	};
 
+	const addDesignationRow = () => {
+		const $row = cloneRow(selectors.designations.template, selectors.designations.row);
+
+		if (!$row) {
+			return;
+		}
+
+		$row.find('input[type="text"]').each(function () {
+			this.value = '';
+		});
+
+		$(selectors.designations.tableBody).append($row);
+		animateRow($row);
+	};
+
+	const removeDesignationRow = (button) => {
+		const $row = $(button).closest(selectors.designations.row);
+		const $rows = $(selectors.designations.tableBody).find(selectors.designations.row);
+
+		if ($rows.length <= 1) {
+			$row.find('input[type="text"]').val('');
+			return;
+		}
+
+		$row.css({ transition: 'all 0.2s ease', opacity: 0, transform: 'translateY(-8px)' });
+		setTimeout(() => {
+			$row.remove();
+		}, 220);
+	};
+
 	const syncDayCardState = ($card) => {
 		const $checkbox = $card.find('input[type="checkbox"]');
 		const isChecked = $checkbox.is(':checked');
@@ -152,6 +189,16 @@
 		removeTimeSlotRow(this);
 	});
 
+	$(document).on('click', selectors.designations.add, (event) => {
+		event.preventDefault();
+		addDesignationRow();
+	});
+
+	$(document).on('click', selectors.designations.remove, function (event) {
+		event.preventDefault();
+		removeDesignationRow(this);
+	});
+
 	$(document).on('change', `${selectors.dayCard} input[type="checkbox"]`, function () {
 		syncDayCardState($(this).closest(selectors.dayCard));
 	});
@@ -159,6 +206,7 @@
 	$(function () {
 		animateExistingRows(selectors.departments.tableBody, selectors.departments.row);
 		animateExistingRows(selectors.timeSlots.tableBody, selectors.timeSlots.row);
+		animateExistingRows(selectors.designations.tableBody, selectors.designations.row);
 
 		$(selectors.dayCard).each(function () {
 			syncDayCardState($(this));
