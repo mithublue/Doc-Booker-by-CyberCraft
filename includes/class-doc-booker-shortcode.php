@@ -216,6 +216,7 @@ class Doc_Booker_Shortcode {
 				</header>
 				<div class="doc-booker-directory__cards">
 					<?php foreach ( $group['doctors'] as $doctor ) : ?>
+					<?php $doctor = apply_filters( 'db_filter-doctor_modifier', $doctor, $group ); ?>
 						<article class="doc-booker-directory__card">
 							<div class="doc-booker-directory__avatar">
 								<?php echo $doctor['avatar']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
