@@ -205,6 +205,7 @@ class Doc_Booker_Shortcode {
 		}
 
 		foreach ( $groups as $group ) {
+			$group = apply_filters( 'db_filter-group_modifier', $group );
 			?>
 			<section class="doc-booker-directory__group" data-letter="<?php echo esc_attr( $group['letter'] ); ?>">
 				<header class="doc-booker-directory__group-header">
