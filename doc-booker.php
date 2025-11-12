@@ -604,6 +604,8 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 
 			$departments  = get_option( self::OPTION_DEPARTMENTS, [] );
 			$designations = self::get_designations();
+			$current_qualification = get_user_meta( $user->ID, 'db_doctor_qualification', true );
+			$current_consultation_fee = get_user_meta( $user->ID, 'db_doctor_consultation_fee', true );
 			$current_department  = get_user_meta( $user->ID, 'db_doctor_department', true );
 			$current_designation = get_user_meta( $user->ID, 'db_doctor_designation', true );
 			?>
@@ -645,6 +647,20 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 						<?php endif; ?>
 					</td>
 				</tr>
+				<!--make doctor qualification meta field here-->
+				<tr>
+					<th><label for="db_doctor_qualification"><?php esc_html_e( 'Qualification', 'doc-booker' ); ?></label></th>
+					<td>
+						<input type="text" name="db_doctor_qualification" id="db_doctor_qualification" class="regular-text" value="<?php echo esc_attr( $current_qualification ); ?>" />
+					</td>
+				</tr>
+				<!--consultation fee: number field-->
+				<tr>
+					<th><label for="db_doctor_consultation_fee"><?php esc_html_e( 'Consultation Fee', 'doc-booker' ); ?></label></th>
+					<td>
+						<input type="number" name="db_doctor_consultation_fee" id="db_doctor_consultation_fee" class="regular-text" value="<?php echo esc_attr( $current_consultation_fee ); ?>" />
+					</td>
+				</tr>
 			</table>
 			<?php
 		}
@@ -677,6 +693,19 @@ if ( ! class_exists( 'Doc_Booker' ) ) {
 				update_user_meta( $user_id, 'db_doctor_designation', $selected_designation );
 			} else {
 				delete_user_meta( $user_id, 'db_doctor_designation' );
+			}
+
+			if ( isset( $_POST['db_doctor_qualification'] ) ) {
+				update_user_meta( $user_id, 'db_doctor_qualification', sanitize_text_field( wp_unslash( $_POST['db_doctor_qualification'] ) ) );
+			} else {
+				delete_user_meta( $user_id, 'db_doctor_qualification' );
+			}
+
+			//save consultation fee
+			if ( isset( $_POST['db_doctor_consultation_fee'] ) ) {
+				update_user_meta( $user_id, 'db_doctor_consultation_fee', sanitize_text_field( wp_unslash( $_POST['db_doctor_consultation_fee'] ) ) );
+			} else {
+				delete_user_meta( $user_id, 'db_doctor_consultation_fee' );
 			}
 		}
 
